@@ -4,10 +4,11 @@ import api from "../../api/axios";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const { login } = useAuth();
-
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -27,6 +28,8 @@ export default function LoginForm() {
 
       // backend should return { user, token }
       login(res.data);
+      navigate("/dashboard");
+
     } catch (err) {
       setError(
         err.response?.data?.message || "Login failed"

@@ -4,9 +4,11 @@ import api from "../../api/axios";
 import { Mail, Lock, User } from "lucide-react";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
+import { useNavigate } from "react-router-dom";
 
 export default function SignupForm() {
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -28,6 +30,8 @@ export default function SignupForm() {
 
       // backend returns { user, token }
       login(res.data);
+            navigate("/dashboard");
+
     } catch (err) {
       setError(
         err.response?.data?.message || "Signup failed"
