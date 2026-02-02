@@ -53,10 +53,10 @@ const studyGroupSchema = new mongoose.Schema(
      * External collaboration links
      */
     links: {
-      whatsapp: String,
-      telegram: String,
-      discord: String,
-      googleMeet: String,
+      whatsapp: { type: String, trim: true },
+      telegram: { type: String, trim: true },
+      discord: { type: String, trim: true },
+      googleMeet: { type: String, trim: true },
     },
 
     customLinks: [
@@ -81,7 +81,8 @@ const studyGroupSchema = new mongoose.Schema(
         type: String,
         enum: ["online", "offline"],
       },
-      location: String, // room OR meeting link
+      location: String,
+      meetingLink: String
     },
 
     university: {
@@ -96,6 +97,15 @@ const studyGroupSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
+
+    notifications: {
+      sessionReminderSent: {
+        type: Boolean,
+        default: false,
+        index: true,
+      },
+    },
+
   },
   { timestamps: true }
 );
@@ -104,11 +114,18 @@ const studyGroupSchema = new mongoose.Schema(
  * Ensure creator is a member & members are unique
  */
 studyGroupSchema.pre("save", function (next) {
-  if (this.creator && !this.members.includes(this.creator)) {
-    this.members.push(this.creator);
+  if (this.creator) {
+    const creatorId = this.creator.toString();
+
+    const memberIds = this.members.map((m) => m.toString());
+
+    if (!memberIds.includes(creatorId)) {
+      this.members.push(this.creator);
+    }
+
+    this.members = [...new Set(memberIds.concat(creatorId))];
   }
 
-  this.members = [...new Set(this.members.map(String))];
   next();
 });
 

@@ -2,8 +2,10 @@ const mongoose = require("mongoose");
 
 /**
  * Generic university scope middleware
- * @param {mongoose.Model} Model - Mongoose model
- * @param {string} paramKey - req.params key containing the ID
+ * Ensures resource belongs to user's university
+ *
+ * @param {mongoose.Model} Model
+ * @param {string} paramKey
  */
 const universityScope = (Model, paramKey = "id") => {
   return async (req, res, next) => {
@@ -20,13 +22,20 @@ const universityScope = (Model, paramKey = "id") => {
         return res.status(404).json({ message: "Resource not found" });
       }
 
+      if (!resource.university) {
+        return res.status(500).json({
+          message: "University scoping misconfigured for this resource",
+        });
+      }
+
       if (
-        !resource.university ||
-        resource.university.toString() !== req.user.university.toString()
+        resource.university.toString() !==
+        req.user.university.toString()
       ) {
         return res.status(403).json({ message: "Access denied" });
       }
 
+      // Attach resource to request to avoid refetching
       req.resource = resource;
 
       next();

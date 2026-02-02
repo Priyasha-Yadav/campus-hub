@@ -8,6 +8,7 @@ const Listing = require("../models/Listing");
 // Public
 router.get("/", auth, listingsController.getAllListings);
 router.get("/:id", auth, universityScope(Listing), listingsController.getListingById);
+router.get("/me", auth, listingsController.getMyListings);
 
 
 // Protected

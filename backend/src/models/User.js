@@ -50,6 +50,8 @@ const userSchema = new mongoose.Schema(
       upiId: {
         type: String,
         trim: true,
+        lowercase: true,
+        match: [/^[\w.\-]{2,}@[a-zA-Z]{2,}$/, "Invalid UPI ID"],
       },
       upiQrUrl: {
         type: String,

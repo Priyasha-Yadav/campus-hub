@@ -4,10 +4,19 @@ const { success, error } = require("../utils/response");
 /**
  * GET /api/listings
  */
-exports.getAllListings = async (req, res, next) => {
+exports.getAllListings = async (req, res) => {
   try {
-    const { search, category, condition, seller } = req.query;
+    const {
+      search,
+      category,
+      condition,
+      seller,
+      page = 1,
+      limit = 12,
+      sort = "newest",
+    } = req.query;
 
+    const safeLimit = Math.min(Number(limit), 50);
     const query = {
       isActive: true,
       university: req.user.university,
@@ -24,13 +33,35 @@ exports.getAllListings = async (req, res, next) => {
       ];
     }
 
-    const listings = await Listing.find(query)
-      .populate("seller", "displayName avatarUrl")
-      .sort({ createdAt: -1 });
+    const sortOptions = {
+      newest: { createdAt: -1 },
+      price_low: { price: 1 },
+      price_high: { price: -1 },
+    };
 
-    return success(res, listings);
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [listings, total] = await Promise.all([
+      Listing.find(query)
+        .populate("seller", "displayName avatarUrl")
+        .sort(sortOptions[sort] || sortOptions.newest)
+        .skip(skip)
+        .limit(safeLimit),
+      Listing.countDocuments(query),
+    ]);
+
+    res.json({
+      success: true,
+      data: listings,
+      meta: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
   } catch (err) {
-    next(err);
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -128,6 +159,20 @@ exports.deleteListing = async (req, res, next) => {
     await listing.save();
 
     return success(res, null, "Listing deleted");
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.getMyListings = async (req, res, next) => {
+  try {
+    const listings = await Listing.find({
+      seller: req.user._id,
+      isActive: true,
+      university: req.user.university,
+    }).sort({ createdAt: -1 });
+
+    return success(res, listings);
   } catch (err) {
     next(err);
   }

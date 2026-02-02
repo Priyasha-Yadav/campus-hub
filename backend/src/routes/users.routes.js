@@ -1,16 +1,28 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
-const upload = require("../middleware/upload");
+const uploadAvatar = require("../middleware/uploadAvatar");
 const usersController = require("../controllers/users.controller");
 
 router.get("/me", auth, usersController.getMe);
 
-router.post(
+router.put(
   "/avatar",
   auth,
-  upload.single("avatar"),
+  uploadAvatar.single("avatar"),
   usersController.uploadAvatar
+);
+
+router.put(
+  "/payment-info",
+  auth,
+  usersController.updatePaymentInfo
+);
+
+router.post(
+  "/saved-listings/:listingId",
+  auth,
+  usersController.toggleSavedListing
 );
 
 module.exports = router;
