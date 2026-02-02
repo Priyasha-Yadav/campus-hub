@@ -1,15 +1,17 @@
 const Listing = require("../models/Listing");
+const { success, error } = require("../utils/response");
 
 /**
- * @route   GET /api/listings
- * @desc    Get all active listings (with optional filters)
- * @access  Public
+ * GET /api/listings
  */
-exports.getAllListings = async (req, res) => {
+exports.getAllListings = async (req, res, next) => {
   try {
     const { search, category, condition, seller } = req.query;
 
-    const query = { isActive: true };
+    const query = {
+      isActive: true,
+      university: req.user.university,
+    };
 
     if (category) query.category = category;
     if (condition) query.condition = condition;
@@ -26,52 +28,42 @@ exports.getAllListings = async (req, res) => {
       .populate("seller", "displayName avatarUrl")
       .sort({ createdAt: -1 });
 
-    res.json(listings);
+    return success(res, listings);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
 /**
- * @route   GET /api/listings/:id
- * @desc    Get single listing
- * @access  Public
+ * GET /api/listings/:id
  */
-exports.getListingById = async (req, res) => {
+exports.getListingById = async (req, res, next) => {
   try {
-    const listing = await Listing.findById(req.params.id).populate(
-      "seller",
-      "displayName avatarUrl"
-    );
+    const listing = await Listing.findOne({
+      _id: req.params.id,
+      isActive: true,
+      university: req.user.university,
+    }).populate("seller", "displayName avatarUrl");
 
-    if (!listing || !listing.isActive) {
-      return res.status(404).json({ message: "Listing not found" });
+    if (!listing) {
+      return error(res, "Listing not found", 404);
     }
 
-    res.json(listing);
+    return success(res, listing);
   } catch (err) {
-    res.status(404).json({ message: "Listing not found" });
+    next(err);
   }
 };
 
 /**
- * @route   POST /api/listings
- * @desc    Create a new listing
- * @access  Private
+ * POST /api/listings
  */
-exports.createListing = async (req, res) => {
+exports.createListing = async (req, res, next) => {
   try {
-    const {
-      title,
-      description,
-      price,
-      category,
-      images,
-      condition,
-    } = req.body;
+    const { title, description, price, category, images, condition } = req.body;
 
     if (!title || !price || !category) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return error(res, "Missing required fields", 400);
     }
 
     const listing = await Listing.create({
@@ -82,62 +74,61 @@ exports.createListing = async (req, res) => {
       images,
       condition,
       seller: req.user._id,
+      university: req.user.university,
     });
 
-    res.status(201).json(listing);
+    return success(res, listing, "Listing created", 201);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(err);
   }
 };
 
 /**
- * @route   PUT /api/listings/:id
- * @desc    Update listing (owner only)
- * @access  Private
+ * PUT /api/listings/:id
  */
-exports.updateListing = async (req, res) => {
+exports.updateListing = async (req, res, next) => {
   try {
-    const listing = await Listing.findById(req.params.id);
+    const listing = await Listing.findOne({
+      _id: req.params.id,
+      seller: req.user._id,
+      university: req.user.university,
+      isActive: true,
+    });
 
-    if (!listing || !listing.isActive) {
-      return res.status(404).json({ message: "Listing not found" });
-    }
-
-    if (listing.seller.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized" });
+    if (!listing) {
+      return error(res, "Listing not found or not authorized", 404);
     }
 
     Object.assign(listing, req.body);
     await listing.save();
 
-    res.json(listing);
+    return success(res, listing);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(err);
   }
 };
 
 /**
- * @route   DELETE /api/listings/:id
- * @desc    Soft delete listing (owner only)
- * @access  Private
+ * DELETE /api/listings/:id
  */
-exports.deleteListing = async (req, res) => {
+exports.deleteListing = async (req, res, next) => {
   try {
-    const listing = await Listing.findById(req.params.id);
+    const listing = await Listing.findOne({
+      _id: req.params.id,
+      seller: req.user._id,
+      university: req.user.university,
+      isActive: true,
+    });
 
-    if (!listing || !listing.isActive) {
-      return res.status(404).json({ message: "Listing not found" });
-    }
-
-    if (listing.seller.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized" });
+    if (!listing) {
+      return error(res, "Listing not found or not authorized", 404);
     }
 
     listing.isActive = false;
     await listing.save();
 
-    res.json({ message: "Listing deleted successfully" });
+    return success(res, null, "Listing deleted");
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(err);
   }
 };

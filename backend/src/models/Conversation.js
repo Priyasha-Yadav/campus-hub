@@ -7,35 +7,55 @@ const conversationSchema = new mongoose.Schema(
       ref: "Listing",
       required: true,
     },
+
     listingTitle: {
       type: String,
       required: true,
+      trim: true,
     },
-    participants: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
+
+    participants: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+      ],
+      validate: {
+        validator: (arr) => arr.length === 2,
+        message: "Conversation must have exactly 2 participants",
       },
-    ],
+    },
+
+    university: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "University",
+      required: true,
+      index: true,
+    },
+
+    lastMessage: {
+      type: String,
+      trim: true,
+    },
+
     lastMessageAt: {
       type: Date,
       default: Date.now,
+      index: true,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-// 🔐 Ensure deterministic order for uniqueness
 conversationSchema.pre("save", function () {
   if (this.participants?.length) {
     this.participants = this.participants.map(String).sort();
   }
 });
 
-// 🔒 Prevent duplicate conversations per listing + participants
+
 conversationSchema.index(
   { listingId: 1, participants: 1 },
   { unique: true }

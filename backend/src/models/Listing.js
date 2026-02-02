@@ -22,7 +22,14 @@ const listingSchema = new mongoose.Schema(
     category: {
       type: String,
       required: true,
-      enum: ["Textbooks", "Electronics", "Furniture", "Other"],
+      enum: [
+        "Textbooks",
+        "Electronics",
+        "Furniture",
+        "Clothing",
+        "Sports",
+        "Other",
+      ],
     },
 
     images: {
@@ -35,7 +42,14 @@ const listingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
+    
+    university: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "University",
+      required: true,
+      index: true,
+    },
+    
     condition: {
       type: String,
       enum: ["new", "like-new", "good", "fair"],

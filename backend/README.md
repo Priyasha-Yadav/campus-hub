@@ -29,39 +29,51 @@ backend/
 ├── src/
 │   ├── server.js
 │   ├── app.js
+│
 │   ├── config/
 │   │   ├── db.js
 │   │   └── env.js
+│
 │   ├── models/
 │   │   ├── User.js
+│   │   ├── University.js       
 │   │   ├── Listing.js
 │   │   ├── StudyGroup.js
 │   │   ├── Conversation.js
 │   │   └── Message.js
+│
 │   ├── controllers/
 │   │   ├── auth.controller.js
+│   │   ├── universities.controller.js  
 │   │   ├── listings.controller.js
 │   │   ├── studyGroups.controller.js
 │   │   ├── conversations.controller.js
 │   │   └── messages.controller.js
+│
 │   ├── routes/
 │   │   ├── auth.routes.js
+│   │   ├── universities.routes.js        
 │   │   ├── listings.routes.js
 │   │   ├── studyGroups.routes.js
 │   │   ├── conversations.routes.js
 │   │   └── messages.routes.js
+│
 │   ├── middleware/
 │   │   ├── auth.js
+│   │   ├── universityScope.js     
 │   │   └── error.js
+│
 │   ├── socket/
 │   │   └── chat.socket.js
+│
 │   └── utils/
 │       ├── jwt.js
 │       └── response.js
+│
 ├── .env
 ├── package.json
 └── README.md
-````
+```
 
 ---
 

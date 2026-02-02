@@ -1,18 +1,21 @@
 const Message = require("../models/Message");
 const Conversation = require("../models/Conversation");
+const { success, error } = require("../utils/response");
 
 /**
- * @route   GET /api/messages/:conversationId
- * @desc    Get messages for a conversation
- * @access  Private
+ * GET /api/messages/:conversationId
  */
-exports.getMessages = async (req, res) => {
+exports.getMessages = async (req, res, next) => {
   try {
     const { conversationId } = req.params;
 
-    const conversation = await Conversation.findById(conversationId);
+    const conversation = await Conversation.findOne({
+      _id: conversationId,
+      university: req.user.university,
+    });
+
     if (!conversation) {
-      return res.status(404).json({ message: "Conversation not found" });
+      return error(res, "Conversation not found", 404);
     }
 
     const isParticipant = conversation.participants
@@ -20,14 +23,14 @@ exports.getMessages = async (req, res) => {
       .includes(req.user._id.toString());
 
     if (!isParticipant) {
-      return res.status(403).json({ message: "Not authorized" });
+      return error(res, "Not authorized", 403);
     }
 
     const messages = await Message.find({ conversationId })
       .sort({ createdAt: 1 });
 
-    res.json(messages);
+    return success(res, messages);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };

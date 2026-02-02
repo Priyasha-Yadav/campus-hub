@@ -1,83 +1,92 @@
 const User = require("../models/User");
 const { generateToken } = require("../utils/jwt");
+const { success, error } = require("../utils/response");
+const { resolveUniversityByEmail } = require("./universities.controller");
 
 /**
- * @route   POST /api/auth/signup
- * @desc    Register new user
- * @access  Public
+ * POST /api/auth/signup
  */
-
 exports.signup = async (req, res, next) => {
   try {
     const { email, password, displayName } = req.body;
 
     if (!email || !password || !displayName) {
-      const err = new Error("All fields are required");
-      err.statusCode = 400;
-      throw err;
+      return error(res, "All fields are required", 400);
     }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      const err = new Error("Email already in use");
-      err.statusCode = 400;
-      throw err;
+      return error(res, "Email already in use", 400);
     }
 
-    const user = await User.create({ email, password, displayName });
-    const token = generateToken(user._id);
+    const university = await resolveUniversityByEmail(email);
 
-    res.status(201).json({
-      user: {
-        id: user._id,
-        email: user.email,
-        displayName: user.displayName,
-      },
-      token,
+    const user = await User.create({
+      email,
+      password,
+      displayName,
+      university: university._id,
     });
+
+    const token = generateToken(user._id, university._id);
+
+    return success(
+      res,
+      {
+        user: {
+          id: user._id,
+          email: user.email,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
+          university: university,
+        },
+        token,
+      },
+      "Signup successful",
+      201
+    );
   } catch (err) {
-    err.statusCode = 400;
     next(err);
   }
 };
 
-
 /**
- * @route   POST /api/auth/login
- * @desc    Login user
- * @access  Public
+ * POST /api/auth/login
  */
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+      return error(res, "Email and password required", 400);
     }
 
-    const user = await User.findOne({ email }).select("+password");
+    const user = await User.findOne({ email })
+      .select("+password")
+      .populate("university", "name logoUrl");
+
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return error(res, "Invalid credentials", 400);
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return error(res, "Invalid credentials", 400);
     }
 
-    const token = generateToken(user._id);
+    const token = generateToken(user._id, user.university._id);
 
-    res.json({
+    return success(res, {
       user: {
         id: user._id,
         email: user.email,
         displayName: user.displayName,
         avatarUrl: user.avatarUrl,
+        university: user.university,
       },
       token,
     });
   } catch (err) {
-    err.statusCode = 400;
     next(err);
   }
 };

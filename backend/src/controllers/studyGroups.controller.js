@@ -1,29 +1,25 @@
 const StudyGroup = require("../models/StudyGroup");
+const { success, error } = require("../utils/response");
 
 /**
- * @route   GET /api/study-groups
- * @desc    Get all study groups (with filters)
- * @access  Public
+ * GET /api/study-groups
  */
-exports.getAllStudyGroups = async (req, res) => {
+exports.getAllStudyGroups = async (req, res, next) => {
   try {
     const { search, subject, myGroups } = req.query;
 
-    const query = { isActive: true };
+    const query = {
+      isActive: true,
+      university: req.user.university,
+    };
 
-    if (subject) {
-      query.subject = subject;
-    }
+    if (subject) query.subject = subject;
 
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { tags: { $in: [new RegExp(search, "i")] } },
-      ];
+      query.$text = { $search: search };
     }
 
-    if (myGroups === "true" && req.user) {
+    if (myGroups === "true") {
       query.members = req.user._id;
     }
 
@@ -31,39 +27,39 @@ exports.getAllStudyGroups = async (req, res) => {
       .populate("creator", "displayName avatarUrl")
       .sort({ createdAt: -1 });
 
-    res.json(groups);
+    return success(res, groups);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    next(err);
   }
 };
 
 /**
- * @route   GET /api/study-groups/:id
- * @desc    Get single study group
- * @access  Public
+ * GET /api/study-groups/:id
  */
-exports.getStudyGroupById = async (req, res) => {
+exports.getStudyGroupById = async (req, res, next) => {
   try {
-    const group = await StudyGroup.findById(req.params.id)
+    const group = await StudyGroup.findOne({
+      _id: req.params.id,
+      university: req.user.university,
+      isActive: true,
+    })
       .populate("creator", "displayName avatarUrl")
       .populate("members", "displayName avatarUrl");
 
-    if (!group || !group.isActive) {
-      return res.status(404).json({ message: "Study group not found" });
+    if (!group) {
+      return error(res, "Study group not found", 404);
     }
 
-    res.json(group);
+    return success(res, group);
   } catch (err) {
-    res.status(404).json({ message: "Study group not found" });
+    next(err);
   }
 };
 
 /**
- * @route   POST /api/study-groups
- * @desc    Create study group
- * @access  Private
+ * POST /api/study-groups
  */
-exports.createStudyGroup = async (req, res) => {
+exports.createStudyGroup = async (req, res, next) => {
   try {
     const {
       name,
@@ -73,13 +69,15 @@ exports.createStudyGroup = async (req, res) => {
       image,
       maxMembers,
       nextSessionAt,
+      links,
+      platform,
     } = req.body;
 
     if (!name || !subject) {
-      return res.status(400).json({ message: "Name and subject are required" });
+      return error(res, "Name and subject are required", 400);
     }
 
-    const studyGroup = await StudyGroup.create({
+    const group = await StudyGroup.create({
       name,
       description,
       subject,
@@ -87,63 +85,78 @@ exports.createStudyGroup = async (req, res) => {
       image,
       maxMembers,
       nextSessionAt,
+      links,
+      platform,
       creator: req.user._id,
-      members: [req.user._id], // 👈 auto-add creator
+      members: [req.user._id],
+      university: req.user.university,
     });
 
-    res.status(201).json(studyGroup);
+    return success(res, group, "Study group created", 201);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(err);
   }
 };
 
 /**
- * @route   POST /api/study-groups/:id/join
- * @desc    Join study group
- * @access  Private
+ * POST /api/study-groups/:id/join
  */
-exports.joinStudyGroup = async (req, res) => {
+exports.joinStudyGroup = async (req, res, next) => {
   try {
-    const group = await StudyGroup.findById(req.params.id);
+    const group = await StudyGroup.findOne({
+      _id: req.params.id,
+      university: req.user.university,
+      isActive: true,
+    });
 
-    if (!group || !group.isActive) {
-      return res.status(404).json({ message: "Study group not found" });
+    if (!group) {
+      return error(res, "Study group not found", 404);
+    }
+
+    if (group.members.includes(req.user._id)) {
+      return error(res, "Already a member", 400);
     }
 
     if (group.members.length >= group.maxMembers) {
-      return res.status(400).json({ message: "Group is full" });
+      return error(res, "Group is full", 400);
     }
 
     group.members.push(req.user._id);
     await group.save();
 
-    res.json({ message: "Joined study group successfully" });
+    return success(res, null, "Joined study group");
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(err);
   }
 };
 
 /**
- * @route   POST /api/study-groups/:id/leave
- * @desc    Leave study group
- * @access  Private
+ * POST /api/study-groups/:id/leave
  */
-exports.leaveStudyGroup = async (req, res) => {
+exports.leaveStudyGroup = async (req, res, next) => {
   try {
-    const group = await StudyGroup.findById(req.params.id);
+    const group = await StudyGroup.findOne({
+      _id: req.params.id,
+      university: req.user.university,
+      isActive: true,
+    });
 
-    if (!group || !group.isActive) {
-      return res.status(404).json({ message: "Study group not found" });
+    if (!group) {
+      return error(res, "Study group not found", 404);
+    }
+
+    if (group.creator.toString() === req.user._id.toString()) {
+      return error(res, "Creator cannot leave the group", 400);
     }
 
     group.members = group.members.filter(
-      (memberId) => memberId.toString() !== req.user._id.toString()
+      (id) => id.toString() !== req.user._id.toString()
     );
 
     await group.save();
 
-    res.json({ message: "Left study group successfully" });
+    return success(res, null, "Left study group");
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    next(err);
   }
 };

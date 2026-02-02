@@ -1,38 +1,73 @@
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 
 const chatSocket = (io) => {
-  io.on("connection", (socket) => {
-    console.log("🟢 Socket connected:", socket.id);
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth?.token;
+      if (!token) return next(new Error("Unauthorized"));
 
-    // Join a conversation room
-    socket.on("join_conversation", (conversationId) => {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.id);
+
+      if (!user) return next(new Error("Unauthorized"));
+
+      socket.user = user;
+      next();
+    } catch {
+      next(new Error("Unauthorized"));
+    }
+  });
+
+  io.on("connection", (socket) => {
+    console.log("🟢 Socket connected:", socket.user._id.toString());
+
+    socket.on("join_conversation", async (conversationId) => {
+      const conversation = await Conversation.findById(conversationId);
+      if (!conversation) return;
+
+      const isParticipant = conversation.participants.some(
+        (id) => id.toString() === socket.user._id.toString()
+      );
+
+      if (
+        !isParticipant ||
+        conversation.university.toString() !== socket.user.university.toString()
+      ) {
+        return;
+      }
+
       socket.join(conversationId);
     });
 
-    // Send message
-    socket.on("send_message", async (data) => {
-      try {
-        const { conversationId, senderId, content } = data;
+    socket.on("send_message", async ({ conversationId, content }) => {
+      const conversation = await Conversation.findById(conversationId);
+      if (!conversation) return;
 
-        const message = await Message.create({
-          conversationId,
-          senderId,
-          content,
-        });
+      const isParticipant = conversation.participants.some(
+        (id) => id.toString() === socket.user._id.toString()
+      );
 
-        await Conversation.findByIdAndUpdate(conversationId, {
-          lastMessageAt: new Date(),
-        });
+      if (!isParticipant) return;
 
-        io.to(conversationId).emit("receive_message", message);
-      } catch (err) {
-        console.error("Socket message error:", err);
-      }
+      const message = await Message.create({
+        conversation: conversationId,
+        sender: socket.user._id,
+        university: socket.user.university,
+        content,
+      });
+
+      conversation.lastMessage = content;
+      conversation.lastMessageAt = new Date();
+      await conversation.save();
+
+      io.to(conversationId).emit("receive_message", message);
     });
 
     socket.on("disconnect", () => {
-      console.log("🔴 Socket disconnected:", socket.id);
+      console.log("🔴 Socket disconnected:", socket.user._id.toString());
     });
   });
 };
