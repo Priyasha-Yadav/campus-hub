@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function AuthCard({ mode, setMode, children }) {
   const navigate = useNavigate();
+  const isAuthMode = mode === "login" || mode === "signup";
 
   return (
     <div className="w-full max-w-[90vw] sm:max-w-[500px] text-center">
@@ -14,7 +15,10 @@ export default function AuthCard({ mode, setMode, children }) {
 
         <h1 className="mt-4 text-2xl font-semibold">Campus Hub</h1>
         <p className="mt-1 text-gray-500">
-          {mode === "login" ? "Welcome back!" : "Join the campus community"}
+          {mode === "login" && "Welcome back!"}
+          {mode === "signup" && "Join the campus community"}
+          {mode === "forgot" && "Reset your password"}
+          {mode === "reset" && "Set a new password"}
         </p>
       </div>
 
@@ -23,33 +27,35 @@ export default function AuthCard({ mode, setMode, children }) {
         {children}
 
         {/* Footer */}
-        <div className="mt-6 text-sm text-center">
-          {mode === "login" ? (
-            <>
-              <span className="text-gray-500">
-                Don’t have an account?{" "}
-              </span>
-              <button
-                onClick={() => setMode("signup")}
-                className="font-medium text-black hover:underline"
-              >
-                Sign up
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="text-gray-500">
-                Already have an account?{" "}
-              </span>
-              <button
-                onClick={() => setMode("login")}
-                className="font-medium text-black hover:underline"
-              >
-                Sign in
-              </button>
-            </>
-          )}
-        </div>
+        {isAuthMode && (
+          <div className="mt-6 text-sm text-center">
+            {mode === "login" ? (
+              <>
+                <span className="text-gray-500">
+                  Don’t have an account?{" "}
+                </span>
+                <button
+                  onClick={() => setMode("signup")}
+                  className="font-medium text-black hover:underline"
+                >
+                  Sign up
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="text-gray-500">
+                  Already have an account?{" "}
+                </span>
+                <button
+                  onClick={() => setMode("login")}
+                  className="font-medium text-black hover:underline"
+                >
+                  Sign in
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Back */}

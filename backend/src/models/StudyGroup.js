@@ -107,13 +107,17 @@ const studyGroupSchema = new mongoose.Schema(
     },
 
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
 /**
  * Ensure creator is a member & members are unique
  */
-studyGroupSchema.pre("save", function (next) {
+studyGroupSchema.pre("save", function () {
   if (this.creator) {
     const creatorId = this.creator.toString();
 
@@ -125,8 +129,6 @@ studyGroupSchema.pre("save", function (next) {
 
     this.members = [...new Set(memberIds.concat(creatorId))];
   }
-
-  next();
 });
 
 /**
@@ -137,6 +139,13 @@ studyGroupSchema.index({
   description: "text",
   subject: "text",
   tags: "text",
+});
+
+studyGroupSchema.index({ university: 1, isActive: 1 });
+studyGroupSchema.index({ university: 1, isActive: 1, "nextSession.at": 1 });
+
+studyGroupSchema.virtual("memberCount").get(function () {
+  return this.members?.length || 0;
 });
 
 module.exports = mongoose.model("StudyGroup", studyGroupSchema);

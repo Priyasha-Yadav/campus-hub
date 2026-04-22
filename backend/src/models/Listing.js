@@ -56,6 +56,13 @@ const listingSchema = new mongoose.Schema(
       default: "good",
     },
 
+    status: {
+      type: String,
+      enum: ["available", "sold", "reserved"],
+      default: "available",
+      index: true,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
@@ -65,5 +72,6 @@ const listingSchema = new mongoose.Schema(
 );
 
 listingSchema.index({ title: "text", description: "text" });
+listingSchema.index({ university: 1, isActive: 1 });
 
 module.exports = mongoose.model("Listing", listingSchema);

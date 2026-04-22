@@ -5,13 +5,29 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
+    if (!saved || saved === "undefined" || saved === "null") {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.id && !parsed._id) {
+        parsed._id = parsed.id;
+      }
+      return parsed;
+    } catch (err) {
+      console.warn("Invalid user in localStorage, clearing.", err);
+      localStorage.removeItem("user");
+      return null;
+    }
   });
 
   const login = ({ user, token }) => {
-    localStorage.setItem("user", JSON.stringify(user));
+    const normalizedUser = user && user.id && !user._id
+      ? { ...user, _id: user.id }
+      : user;
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
     localStorage.setItem("token", token);
-    setUser(user);
+    setUser(normalizedUser);
   };
 
   const logout = () => {

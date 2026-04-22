@@ -6,7 +6,7 @@ import Input from "../ui/Input";
 import Button from "../ui/Button";
 import { useNavigate } from "react-router-dom";
 
-export default function LoginForm() {
+export default function LoginForm({ onForgot }) {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -26,8 +26,8 @@ export default function LoginForm() {
         password,
       });
 
-      // backend should return { user, token }
-      login(res.data);
+      // backend returns { data: { user, token } }
+      login(res.data?.data);
       navigate("/dashboard");
 
     } catch (err) {
@@ -73,6 +73,16 @@ export default function LoginForm() {
       <Button disabled={loading}>
         {loading ? "Signing in..." : "Sign In"}
       </Button>
+
+      {onForgot && (
+        <button
+          type="button"
+          onClick={onForgot}
+          className="w-full text-sm text-gray-500 hover:underline"
+        >
+          Forgot your password?
+        </button>
+      )}
     </form>
   );
 }

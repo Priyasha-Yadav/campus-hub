@@ -50,7 +50,12 @@ const chatSocket = (io) => {
         (id) => id.toString() === socket.user._id.toString()
       );
 
-      if (!isParticipant) return;
+      if (
+        !isParticipant ||
+        conversation.university.toString() !== socket.user.university.toString()
+      ) {
+        return;
+      }
 
       const message = await Message.create({
         conversation: conversationId,
@@ -64,6 +69,36 @@ const chatSocket = (io) => {
       await conversation.save();
 
       io.to(conversationId).emit("receive_message", message);
+    });
+
+    socket.on("mark_read", async ({ conversationId }) => {
+      const conversation = await Conversation.findById(conversationId);
+      if (!conversation) return;
+
+      const isParticipant = conversation.participants.some(
+        (id) => id.toString() === socket.user._id.toString()
+      );
+
+      if (
+        !isParticipant ||
+        conversation.university.toString() !== socket.user.university.toString()
+      ) {
+        return;
+      }
+
+      await Message.updateMany(
+        {
+          conversation: conversationId,
+          sender: { $ne: socket.user._id },
+          readAt: null,
+        },
+        { readAt: new Date() }
+      );
+
+      io.to(conversationId).emit("messages_read", {
+        conversationId,
+        readerId: socket.user._id,
+      });
     });
 
     socket.on("disconnect", () => {

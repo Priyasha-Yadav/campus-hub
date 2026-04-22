@@ -28,8 +28,8 @@ export default function SignupForm() {
         password,
       });
 
-      // backend returns { user, token }
-      login(res.data);
+      // backend returns { data: { user, token } }
+      login(res.data?.data);
             navigate("/dashboard");
 
     } catch (err) {

@@ -1,6 +1,7 @@
 const Conversation = require("../models/Conversation");
 const Listing = require("../models/Listing");
 const User = require("../models/User");
+const Message = require("../models/Message");
 const { success, error } = require("../utils/response");
 
 /**
@@ -15,7 +16,20 @@ exports.getUserConversations = async (req, res, next) => {
       .populate("participants", "displayName avatarUrl")
       .sort({ lastMessageAt: -1 });
 
-    return success(res, conversations);
+    const conversationsWithUnread = await Promise.all(
+      conversations.map(async (conversation) => {
+        const unreadCount = await Message.countDocuments({
+          conversation: conversation._id,
+          sender: { $ne: req.user._id },
+          readAt: null,
+        });
+        const data = conversation.toObject();
+        data.unreadCount = unreadCount;
+        return data;
+      })
+    );
+
+    return success(res, conversationsWithUnread);
   } catch (err) {
     next(err);
   }

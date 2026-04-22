@@ -3,9 +3,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import AuthCard from "../components/auth/AuthCard";
 import LoginForm from "../components/auth/LoginForm";
 import SignupForm from "../components/auth/SignupForm";
+import ForgotPasswordForm from "../components/auth/ForgotPasswordForm";
+import ResetPasswordForm from "../components/auth/ResetPasswordForm";
 
 export default function Auth() {
   const [mode, setMode] = useState("login");
+  const [resetToken, setResetToken] = useState("");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
@@ -19,7 +22,24 @@ export default function Auth() {
           transition={{ duration: 0.25, ease: "easeOut" }}
         >
           <AuthCard mode={mode} setMode={setMode}>
-            {mode === "login" ? <LoginForm /> : <SignupForm />}
+            {mode === "login" && <LoginForm onForgot={() => setMode("forgot")} />}
+            {mode === "signup" && <SignupForm />}
+            {mode === "forgot" && (
+              <ForgotPasswordForm
+                onBack={() => setMode("login")}
+                onSent={(token) => {
+                  if (token) setResetToken(token);
+                  setMode("reset");
+                }}
+              />
+            )}
+            {mode === "reset" && (
+              <ResetPasswordForm
+                defaultToken={resetToken}
+                onBack={() => setMode("login")}
+                onReset={() => setMode("login")}
+              />
+            )}
           </AuthCard>
         </motion.div>
       </AnimatePresence>

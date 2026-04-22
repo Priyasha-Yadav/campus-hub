@@ -8,7 +8,7 @@ const storage = new CloudinaryStorage({
     folder: "campus-hub/avatars",
     resource_type: "image",
     public_id: `user_${Date.now()}`,
-    format: ["jpg", "jpeg", "png", "webp"],
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
     transformation: [
       {
         width: 256,
@@ -31,7 +31,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB
+    fileSize: 5 * 1024 * 1024, // 5MB
   },
 });
 

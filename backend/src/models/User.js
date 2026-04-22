@@ -59,9 +59,52 @@ const userSchema = new mongoose.Schema(
       },
     },
 
+    notificationPreferences: {
+      messages: {
+        type: Boolean,
+        default: true,
+      },
+      studyGroups: {
+        type: Boolean,
+        default: true,
+      },
+      marketplace: {
+        type: Boolean,
+        default: true,
+      },
+    },
+
+    privacySettings: {
+      profileVisibility: {
+        type: String,
+        enum: ["everyone", "students", "private"],
+        default: "everyone",
+      },
+      showOnlineStatus: {
+        type: Boolean,
+        default: true,
+      },
+      allowDirectMessages: {
+        type: Boolean,
+        default: true,
+      },
+    },
+
     isActive: {
       type: Boolean,
       default: true,
+    },
+
+    passwordResetToken: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    passwordResetExpires: {
+      type: Date,
+      default: null,
+      select: false,
     },
   },
   {
