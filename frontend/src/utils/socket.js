@@ -1,12 +1,16 @@
 import { io } from 'socket.io-client';
 
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ||
+  'https://campus-hub-bng6.onrender.com';
+
 class SocketService {
   constructor() {
     this.socket = null;
   }
 
   connect() {
-    this.socket = io('http://localhost:8000', {
+    this.socket = io(SOCKET_URL, {
       auth: {
         token: localStorage.getItem('token')
       }
