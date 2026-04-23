@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../context/useAuthContext';
 import { studyGroupsApi } from '../api/studyGroups';
 import { messagesApi } from '../api/messages';
 import { fetchMyListings } from '../api/listings';

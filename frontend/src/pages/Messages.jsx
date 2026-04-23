@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import ConversationList from '../components/messages/ConversationList';
 import ChatWindow from '../components/messages/ChatWindow';
 import { messagesApi } from '../api/messages';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../context/useAuthContext';
 import socketService from '../utils/socket';
 
 export default function Messages() {

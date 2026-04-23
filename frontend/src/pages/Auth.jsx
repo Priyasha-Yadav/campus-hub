@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion as Motion } from "framer-motion";
 import AuthCard from "../components/auth/AuthCard";
 import LoginForm from "../components/auth/LoginForm";
 import SignupForm from "../components/auth/SignupForm";
@@ -13,7 +13,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <AnimatePresence mode="wait">
-        <motion.div
+        <Motion.div
           key={mode}
           className="w-full max-w-[420px]"
           initial={{ opacity: 0, y: 16 }}
@@ -41,7 +41,7 @@ export default function Auth() {
               />
             )}
           </AuthCard>
-        </motion.div>
+        </Motion.div>
       </AnimatePresence>
     </div>
   );

@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
 import { User, Mail, Phone, MapPin, Save, Trash2, LogOut } from 'lucide-react';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuthContext } from '../../context/useAuthContext';
 import { useNavigate } from 'react-router-dom';
 import Card from '../ui/Card';
 import { fetchMyListings } from '../../api/listings';
 import { usersApi } from '../../api/users';
 import ListingCard from '../marketplace/ListingCard';
 import ConfirmModal from '../ui/ConfirmModal';
-import { useToast } from '../ui/ToastProvider';
+import { useToast } from '../ui/useToast';
 import { updatePaymentInfo, uploadPaymentQr } from '../../api/settings';
 
 export default function ProfileSettings({ settings, onSettingsUpdate }) {
@@ -94,15 +94,19 @@ export default function ProfileSettings({ settings, onSettingsUpdate }) {
     try {
       setAvatarLoading(true);
       const response = await usersApi.uploadAvatar(file);
-      
-      if (response.data?.avatarUrl) {
-        const newAvatarUrl = response.data.avatarUrl;
+
+      const newAvatarUrl =
+        response?.data?.data?.avatarUrl || response?.data?.avatarUrl;
+
+      if (newAvatarUrl) {
         setAvatarUrl(newAvatarUrl);
-        
+
         // Update user context
         const updatedUser = { ...user, avatarUrl: newAvatarUrl, avatar: newAvatarUrl };
         login({ user: updatedUser, token: localStorage.getItem('token') });
         show("Profile picture updated", "success");
+      } else {
+        show("Avatar uploaded but response was invalid", "error");
       }
     } catch (error) {
       console.error("Failed to upload avatar:", error);

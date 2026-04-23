@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Users, Calendar, Tag, Link2, MapPin, Video, ArrowLeft, Trash2 } from 'lucide-react';
 import { studyGroupsApi } from '../api/studyGroups';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../context/useAuthContext';
 
 export default function StudyGroupDetails() {
   const { id } = useParams();
@@ -14,11 +14,7 @@ export default function StudyGroupDetails() {
   const [isJoined, setIsJoined] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    loadGroupDetails();
-  }, [id]);
-
-  const loadGroupDetails = async () => {
+  const loadGroupDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await studyGroupsApi.getStudyGroup(id);
@@ -26,8 +22,10 @@ export default function StudyGroupDetails() {
       setGroup(groupData);
       
       // Check if user is in the group
-      if (groupData?.members?.some(m => m._id === user._id)) {
+      if (user?._id && groupData?.members?.some((m) => m._id === user._id)) {
         setIsJoined(true);
+      } else {
+        setIsJoined(false);
       }
     } catch (err) {
       console.error('Error loading group:', err);
@@ -35,7 +33,11 @@ export default function StudyGroupDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, user?._id]);
+
+  useEffect(() => {
+    loadGroupDetails();
+  }, [loadGroupDetails]);
 
   const handleJoinGroup = async () => {
     try {

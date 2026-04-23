@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import { messagesApi } from '../../api/messages';
@@ -16,8 +16,38 @@ export default function ChatWindow({ conversation, currentUser, onRead }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const loadMessages = useCallback(async (nextPage) => {
+    if (!conversation?._id) return;
+    try {
+      setLoading(true);
+      const response = await messagesApi.getMessages(conversation._id, {
+        page: nextPage,
+        limit: 30,
+      });
+      const payload = response.data?.data || {};
+      const incoming = payload.messages || [];
+
+      setMessages((prev) =>
+        nextPage === 1 ? incoming : [...incoming, ...prev]
+      );
+      setPage(nextPage);
+      setHasMore(
+        payload.meta &&
+          payload.meta.page < payload.meta.totalPages
+      );
+
+      socketService.markRead(conversation._id);
+      messagesApi.markConversationRead(conversation._id).catch(() => {});
+      if (onRead) onRead();
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [conversation?._id, onRead]);
+
   useEffect(() => {
-    if (conversation) {
+    if (conversation && currentUser?._id) {
       setMessages([]);
       setPage(1);
       setHasMore(false);
@@ -50,40 +80,11 @@ export default function ChatWindow({ conversation, currentUser, onRead }) {
         socketService.offMessagesRead();
       };
     }
-  }, [conversation]);
+  }, [conversation, currentUser?._id, loadMessages, onRead]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  const loadMessages = async (nextPage) => {
-    try {
-      setLoading(true);
-      const response = await messagesApi.getMessages(conversation._id, {
-        page: nextPage,
-        limit: 30,
-      });
-      const payload = response.data?.data || {};
-      const incoming = payload.messages || [];
-
-      setMessages((prev) =>
-        nextPage === 1 ? incoming : [...incoming, ...prev]
-      );
-      setPage(nextPage);
-      setHasMore(
-        payload.meta &&
-          payload.meta.page < payload.meta.totalPages
-      );
-
-      socketService.markRead(conversation._id);
-      messagesApi.markConversationRead(conversation._id).catch(() => {});
-      if (onRead) onRead();
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();

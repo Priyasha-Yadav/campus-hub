@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion as Motion } from "framer-motion";
 import {
   GraduationCap,
   ShoppingBag,
@@ -62,7 +62,7 @@ export default function Landing() {
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-black/10 blur-3xl rounded-full" />
         <div className="absolute top-32 right-0 w-72 h-72 bg-black/5 blur-2xl rounded-full" />
 
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
@@ -99,14 +99,14 @@ export default function Landing() {
               Watch Demo
             </button>
           </div>
-        </motion.div>
+        </Motion.div>
       </section>
 
       {/* Stats */}
       <section className="px-6 py-20 bg-black text-white">
         <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-12 text-center">
           {stats.map((stat, i) => (
-            <motion.div
+            <Motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -115,7 +115,7 @@ export default function Landing() {
             >
               <div className="text-5xl font-bold mb-2">{stat.number}</div>
               <div className="text-gray-400">{stat.label}</div>
-            </motion.div>
+            </Motion.div>
           ))}
         </div>
       </section>
@@ -137,7 +137,7 @@ export default function Landing() {
               const Icon = feature.icon;
 
               return (
-                <motion.div
+                <Motion.div
                   key={i}
                   whileHover={{ y: -6 }}
                   transition={{ type: "spring", stiffness: 200 }}
@@ -165,7 +165,7 @@ export default function Landing() {
                   >
                     {feature.desc}
                   </p>
-                </motion.div>
+                </Motion.div>
               );
             })}
           </div>

@@ -1,27 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 
+const buildInitialFormData = (initialData) => ({
+  name: initialData?.name || '',
+  description: initialData?.description || '',
+  subject: initialData?.subject || '',
+  tags: (initialData?.tags || []).join(', '),
+  maxMembers: initialData?.maxMembers || 10,
+  nextSessionAt: initialData?.nextSession?.at
+    ? new Date(initialData.nextSession.at).toISOString().slice(0, 16)
+    : '',
+  nextSessionMode: initialData?.nextSession?.mode || 'online',
+  nextSessionLocation: initialData?.nextSession?.location || '',
+  nextSessionMeetingLink: initialData?.nextSession?.meetingLink || '',
+  links: {
+    whatsapp: initialData?.links?.whatsapp || '',
+    telegram: initialData?.links?.telegram || '',
+    discord: initialData?.links?.discord || '',
+    googleMeet: initialData?.links?.googleMeet || ''
+  },
+  customLinks: initialData?.customLinks?.length
+    ? initialData.customLinks.map((link) => ({
+        label: link.label || '',
+        url: link.url || ''
+      }))
+    : [{ label: '', url: '' }]
+});
+
 export default function CreateGroupModal({ isOpen, onClose, onSubmit, initialData, submitLabel = 'Create Group' }) {
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    subject: '',
-    tags: '',
-    maxMembers: 10,
-    nextSessionAt: '',
-    nextSessionMode: 'online',
-    nextSessionLocation: '',
-    nextSessionMeetingLink: '',
-    links: {
-      whatsapp: '',
-      telegram: '',
-      discord: '',
-      googleMeet: ''
-    },
-    customLinks: [
-      { label: '', url: '' }
-    ]
-  });
+  const [formData, setFormData] = useState(() => buildInitialFormData(initialData));
   const [coverFile, setCoverFile] = useState(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -36,44 +43,15 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, initialDat
     'Other'
   ];
 
-  useEffect(() => {
-    if (initialData) {
-      setFormData({
-        name: initialData.name || '',
-        description: initialData.description || '',
-        subject: initialData.subject || '',
-        tags: (initialData.tags || []).join(', '),
-        maxMembers: initialData.maxMembers || 10,
-        nextSessionAt: initialData.nextSession?.at
-          ? new Date(initialData.nextSession.at).toISOString().slice(0, 16)
-          : '',
-        nextSessionMode: initialData.nextSession?.mode || 'online',
-        nextSessionLocation: initialData.nextSession?.location || '',
-        nextSessionMeetingLink: initialData.nextSession?.meetingLink || '',
-        links: {
-          whatsapp: initialData.links?.whatsapp || '',
-          telegram: initialData.links?.telegram || '',
-          discord: initialData.links?.discord || '',
-          googleMeet: initialData.links?.googleMeet || ''
-        },
-        customLinks: initialData.customLinks?.length
-          ? initialData.customLinks.map((link) => ({
-              label: link.label || '',
-              url: link.url || ''
-            }))
-          : [{ label: '', url: '' }]
-      });
-    }
-  }, [initialData]);
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (submitting) return;
     setError("");
     setSubmitting(true);
+
     const data = {
       ...formData,
-      tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+      tags: formData.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
       links: {
         whatsapp: formData.links.whatsapp || undefined,
         telegram: formData.links.telegram || undefined,
@@ -95,26 +73,10 @@ export default function CreateGroupModal({ isOpen, onClose, onSubmit, initialDat
           }
         : undefined
     };
+
     Promise.resolve(onSubmit({ data, coverFile }))
       .then(() => {
-        setFormData({
-          name: '',
-          description: '',
-          subject: '',
-          tags: '',
-          maxMembers: 10,
-          nextSessionAt: '',
-          nextSessionMode: 'online',
-          nextSessionLocation: '',
-          nextSessionMeetingLink: '',
-          links: {
-            whatsapp: '',
-            telegram: '',
-            discord: '',
-            googleMeet: ''
-          },
-          customLinks: [{ label: '', url: '' }]
-        });
+        setFormData(buildInitialFormData());
         setCoverFile(null);
       })
       .catch((err) => {

@@ -23,7 +23,7 @@ export default function ListingsGrid({ filters }) {
           setListings(response.items);
           setMeta(response.meta);
         } else {
-          console.error("Listings is not an array:", data);
+          console.error("Listings is not an array:", response.items);
           setListings([]);
           setMeta(null);
         }

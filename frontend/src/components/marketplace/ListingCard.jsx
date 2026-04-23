@@ -1,32 +1,25 @@
 import { Heart, MessageCircle, CheckCircle } from "lucide-react";
 import { messagesApi } from "../../api/messages";
 import { updateListingStatus, updateListing, deleteListing, uploadListingImages } from "../../api/listings";
-import { useAuthContext } from "../../context/AuthContext";
+import { useAuthContext } from "../../context/useAuthContext";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { usersApi } from "../../api/users";
 import ListItemModal from "./ListItemModal";
 import ConfirmModal from "../ui/ConfirmModal";
-import { useToast } from "../ui/ToastProvider";
+import { useToast } from "../ui/useToast";
 
 export default function ListingCard({ item }) {
   const { user, login } = useAuthContext();
   const navigate = useNavigate();
   const [status, setStatus] = useState(item.status || "available");
-  const [isSaved, setIsSaved] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { show } = useToast();
   const isSeller = user && item.seller?._id === user._id;
-
-  useEffect(() => {
-    if (!user) {
-      setIsSaved(false);
-      return;
-    }
-    const saved = (user.savedListings || []).map(String);
-    setIsSaved(saved.includes(String(item._id)));
-  }, [user, item._id]);
+  const isSaved = (user?.savedListings || [])
+    .map(String)
+    .includes(String(item._id));
 
   const handleStartConversation = async () => {
     if (!user) {
@@ -67,15 +60,15 @@ export default function ListingCard({ item }) {
       return;
     }
     try {
+      const wasSaved = isSaved;
       const response = await usersApi.toggleSavedListing(item._id);
       const saved = response.data?.data || [];
       const normalizedSaved = saved.map(String);
-      setIsSaved(normalizedSaved.includes(String(item._id)));
       login({
         user: { ...user, savedListings: normalizedSaved },
         token: localStorage.getItem("token"),
       });
-      show(isSaved ? "Removed from wishlist" : "Saved to wishlist", "success");
+      show(wasSaved ? "Removed from wishlist" : "Saved to wishlist", "success");
     } catch (error) {
       console.error("Error toggling wishlist:", error);
       show("Wishlist update failed", "error");

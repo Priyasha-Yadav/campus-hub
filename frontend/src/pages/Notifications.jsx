@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Bell, MessageCircle, Users, ShoppingBag, Check, X } from 'lucide-react';
 import Card from '../components/ui/Card';
 import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification } from '../api/notifications';
@@ -11,7 +11,7 @@ export default function Notifications() {
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState(null);
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     try {
       setLoading(true);
       const params = {};
@@ -31,7 +31,7 @@ export default function Notifications() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, page]);
 
   useEffect(() => {
     setPage(1);
@@ -39,7 +39,7 @@ export default function Notifications() {
 
   useEffect(() => {
     loadNotifications();
-  }, [filter, page]);
+  }, [loadNotifications]);
 
   const markAsRead = async (id) => {
     try {

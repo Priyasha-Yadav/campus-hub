@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import StudyGroupCard from '../components/studyGroups/StudyGroupCard';
 import StudyGroupFilters from '../components/studyGroups/StudyGroupFilters';
 import CreateGroupModal from '../components/studyGroups/CreateGroupModal';
 import { studyGroupsApi } from '../api/studyGroups';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../context/useAuthContext';
 
 export default function StudyGroups() {
   const navigate = useNavigate();
@@ -27,11 +27,7 @@ export default function StudyGroups() {
     setPage(1);
   }, [filters]);
 
-  useEffect(() => {
-    loadGroups();
-  }, [filters, page]);
-
-  const loadGroups = async () => {
+  const loadGroups = useCallback(async () => {
     try {
       const params = {};
       if (filters.search) params.search = filters.search;
@@ -47,7 +43,11 @@ export default function StudyGroups() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, page]);
+
+  useEffect(() => {
+    loadGroups();
+  }, [loadGroups]);
 
   const handleCreateGroup = async ({ data, coverFile }) => {
     try {
@@ -205,6 +205,7 @@ export default function StudyGroups() {
       />
 
       <CreateGroupModal
+        key={editingGroup?._id || 'edit-modal'}
         isOpen={Boolean(editingGroup)}
         onClose={() => setEditingGroup(null)}
         onSubmit={handleEditGroup}

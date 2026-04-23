@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { LazyMotion, domAnimation, m } from "framer-motion";
-import { useEffect, useState } from "react";
+import { LazyMotion, domAnimation } from "framer-motion";
+import { createElement, useEffect, useState } from "react";
 import { fetchNotifications } from "../../api/notifications";
 import {
   ShoppingBag,
@@ -32,7 +32,7 @@ export default function SideNav() {
         const response = await fetchNotifications({ read: "false", limit: 1 });
         const count = response?.data?.meta?.unreadCount ?? 0;
         setUnreadCount(count);
-      } catch (error) {
+      } catch {
         setUnreadCount(0);
       }
     };
@@ -54,37 +54,24 @@ export default function SideNav() {
       {/* Nav */}
       <LazyMotion features={domAnimation}>
         <nav className="flex-1 space-y-1">
-          {navItems.map(({ name, to, icon: Icon }) => (
+          {navItems.map((item) => (
             <NavLink
-              key={name}
-              to={to}
+              key={item.name}
+              to={item.to}
               className={({ isActive }) =>
-                `relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
+                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors
                  ${isActive
-                  ? "text-black"
+                  ? "text-black bg-gray-100"
                   : "text-gray-600 hover:text-black"
                 }`
               }
             >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <m.span
-                      layoutId="nav-pill"
-                      className="absolute inset-0 rounded-lg bg-gray-100"
-                      transition={{ duration: 0.35, ease: "easeInOut", delay: 0.05 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-3 w-full">
-                    <Icon className="h-5 w-5" />
-                    <span className="flex-1">{name}</span>
-                    {name === "Notifications" && unreadCount > 0 && (
-                      <span className="inline-flex items-center justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </span>
-                </>
+              {createElement(item.icon, { className: "h-5 w-5" })}
+              <span className="flex-1">{item.name}</span>
+              {item.name === "Notifications" && unreadCount > 0 && (
+                <span className="inline-flex items-center justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white">
+                  {unreadCount}
+                </span>
               )}
             </NavLink>
           ))}
