@@ -95,9 +95,14 @@ export default function Landing() {
               <ArrowRight className="w-5 h-5" />
             </Link>
 
-            <button className="px-9 py-4 border-2 border-black rounded-xl font-semibold text-lg hover:bg-black hover:text-white transition">
+            <a
+              href="https://youtu.be/T6d5j0IFiI8?si=zytzbsQC4-Vch5GN"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center px-9 py-4 border-2 border-black rounded-xl font-semibold text-lg hover:bg-black hover:text-white transition"
+            >
               Watch Demo
-            </button>
+            </a>
           </div>
         </Motion.div>
       </section>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ConversationList from '../components/messages/ConversationList';
 import ChatWindow from '../components/messages/ChatWindow';
 import { messagesApi } from '../api/messages';
@@ -10,6 +10,21 @@ export default function Messages() {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuthContext();
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const response = await messagesApi.getConversations();
+      setConversations(response.data?.data || []);
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const refreshConversations = useCallback(() => {
+    loadConversations();
+  }, [loadConversations]);
 
   useEffect(() => {
     loadConversations();
@@ -26,25 +41,10 @@ export default function Messages() {
       socketService.offMessagesRead();
       socketService.disconnect();
     };
-  }, []);
-
-  const loadConversations = async () => {
-    try {
-      const response = await messagesApi.getConversations();
-      setConversations(response.data?.data || []);
-    } catch (error) {
-      console.error('Error loading conversations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loadConversations]);
 
   const handleSelectConversation = (conversation) => {
     setSelectedConversation(conversation);
-  };
-
-  const refreshConversations = () => {
-    loadConversations();
   };
 
   if (loading) {
